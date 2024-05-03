@@ -7,7 +7,7 @@ namespace PKHeX.Core;
 /// </summary>
 public static class GameLanguage
 {
-    public const string DefaultLanguage = "en"; // English
+    public const string DefaultLanguage = "zh"; // English
     public static int DefaultLanguageIndex => Array.IndexOf(LanguageCodes, DefaultLanguage);
     public static string Language2Char(int lang) => (uint)lang >= LanguageCodes.Length ? DefaultLanguage : LanguageCodes[lang];
 
