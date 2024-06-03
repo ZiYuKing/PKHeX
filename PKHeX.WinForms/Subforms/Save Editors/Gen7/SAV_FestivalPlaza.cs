@@ -397,7 +397,7 @@ public partial class SAV_FestivalPlaza : Form
         if (ModifierKeys != Keys.Control)
             return;
 
-        var d = new TrashEditor(tb, SAV);
+        var d = new TrashEditor(tb, SAV, SAV.Generation);
         d.ShowDialog();
         tb.Text = d.FinalString;
     }
@@ -756,7 +756,7 @@ public partial class SAV_FestivalPlaza : Form
     {
         if (NUD_Grade.Value < 30 && DialogResult.Yes != WinFormsUtil.Prompt(MessageBoxButtons.YesNo, "Agent Sunglasses is reward of Grade 30.", "Continue?"))
             return;
-        SAV.Fashion.Data[0xD0] = 3;
+        SAV.Fashion.GiveAgentSunglasses();
         B_AgentGlass.Enabled = false;
         System.Media.SystemSounds.Asterisk.Play();
     }

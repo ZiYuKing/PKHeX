@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Media;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -227,12 +228,14 @@ public partial class Main : Form
         showChangelog = false;
 
         // Version Check
-        if (Settings.Startup.Version.Length != 0 && Settings.Startup.ShowChangelogOnUpdate) // already run on system
+        var ver = Program.CurrentVersion;
+        var startup = Settings.Startup;
+        if (startup.ShowChangelogOnUpdate && startup.Version.Length != 0) // already run on system
         {
-            bool parsed = Version.TryParse(Settings.Startup.Version, out var lastrev);
-            showChangelog = parsed && lastrev < Program.CurrentVersion;
+            bool parsed = Version.TryParse(startup.Version, out var lastrev);
+            showChangelog = parsed && lastrev < ver;
         }
-        Settings.Startup.Version = Program.CurrentVersion.ToString(); // set current version so this doesn't happen until the user updates next time
+        startup.Version = ver.ToString(); // set current version so this doesn't happen until the user updates next time
 
         // BAK Prompt
         if (!Settings.Backup.BAKPrompt)
@@ -260,6 +263,8 @@ public partial class Main : Form
 
     private void FormLoadPlugins()
     {
+        if (Plugins.Count != 0)
+            return; // already loaded
 #if !MERGED // merged should load dlls from within too, folder is no longer required
         if (!Directory.Exists(PluginPath))
             return;
@@ -321,7 +326,11 @@ public partial class Main : Form
         report.Show();
         var list = new List<SlotCache>();
         SlotInfoLoader.AddFromSaveFile(C_SAV.SAV, list);
-        report.PopulateData(list);
+
+        var settings = Settings.Report;
+        var extra = CollectionsMarshal.AsSpan(settings.ExtraProperties);
+        var hide = CollectionsMarshal.AsSpan(settings.HiddenProperties);
+        report.PopulateData(list, extra, hide);
     }
 
     private void MainMenuDatabase(object sender, EventArgs e)
@@ -680,6 +689,9 @@ public partial class Main : Form
 
     private bool OpenPCBoxBin(ConcatenatedEntitySet pkms)
     {
+        if (C_SAV.IsBoxDragActive)
+            return true;
+        Cursor = Cursors.Default;
         if (!C_SAV.OpenPCBoxBin(pkms.Data.Span, out string c))
         {
             WinFormsUtil.Alert(MsgFileLoadIncompatible, c);
@@ -737,7 +749,7 @@ public partial class Main : Form
             case MemoryCardSaveStatus.SaveGameRSBOX: memCard.SelectSaveGame(GameVersion.RSBOX); break;
 
             default:
-                WinFormsUtil.Error(!SaveUtil.IsSizeValid(memCard.Data.Length) ? MsgFileGameCubeBad : GetHintInvalidFile(memCard.Data, path), path);
+                WinFormsUtil.Error(!SAV3GCMemoryCard.IsMemoryCardSize(memCard.Data.Length) ? MsgFileGameCubeBad : GetHintInvalidFile(memCard.Data, path), path);
                 return false;
         }
         return true;
@@ -878,19 +890,19 @@ public partial class Main : Form
             return false;
 
         var meta = sav.Metadata;
-        string backupName = Path.Combine(dir, Util.CleanFileName(meta.BAKName));
+        var backupName = meta.GetBackupFileName(dir);
         if (File.Exists(backupName))
             return false; // Already backed up.
 
         // Ensure the file we are copying exists.
         var src = meta.FilePath;
-        if (src is not { } x || !File.Exists(x))
+        if (src is null || !File.Exists(src))
             return false;
 
         try
         {
             // Don't need to force overwrite, but on the off-chance it was written externally, we force ours.
-            File.Copy(x, backupName, true);
+            File.Copy(src, backupName, true);
             return true;
         }
         catch (Exception ex)

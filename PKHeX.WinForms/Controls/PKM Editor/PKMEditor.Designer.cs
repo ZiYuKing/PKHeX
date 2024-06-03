@@ -633,7 +633,7 @@ namespace PKHeX.WinForms.Controls
             TB_Nickname.Name = "TB_Nickname";
             TB_Nickname.Size = new System.Drawing.Size(144, 23);
             TB_Nickname.TabIndex = 5;
-            TB_Nickname.TextChanged += RefreshFontWarningButton;
+            TB_Nickname.TextChanged += UpdateIsNicknamed;
             TB_Nickname.MouseDown += UpdateNicknameClick;
             // 
             // BTN_NicknameWarn
@@ -2169,7 +2169,7 @@ namespace PKHeX.WinForms.Controls
             BTN_Medals.TabIndex = 29;
             BTN_Medals.Text = "Medals";
             BTN_Medals.UseVisualStyleBackColor = true;
-            BTN_Medals.Click += OpenMedals;
+            BTN_Medals.Click += OpenSuperTrainRegimen;
             // 
             // BTN_History
             // 
@@ -2887,7 +2887,7 @@ namespace PKHeX.WinForms.Controls
             // StatusView
             // 
             StatusView.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
-            StatusView.Location = new System.Drawing.Point(-4, 344);
+            StatusView.Location = new System.Drawing.Point(24, 342);
             StatusView.Margin = new System.Windows.Forms.Padding(0);
             StatusView.Name = "StatusView";
             StatusView.Size = new System.Drawing.Size(64, 64);
@@ -2977,9 +2977,9 @@ namespace PKHeX.WinForms.Controls
             // PKMEditor
             // 
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
+            Controls.Add(Hidden_TC);
             Controls.Add(StatusView);
             Controls.Add(TC_Editor);
-            Controls.Add(Hidden_TC);
             Name = "PKMEditor";
             Size = new System.Drawing.Size(400, 400);
             Hidden_TC.ResumeLayout(false);
