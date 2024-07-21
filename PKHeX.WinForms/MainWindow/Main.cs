@@ -34,7 +34,10 @@ public partial class Main : Form
         FormLoadAddEvents();
 #if DEBUG // translation updater -- all controls are added at this point -- call translate now
         if (DevUtil.IsUpdatingTranslations)
+        {
             WinFormsUtil.TranslateInterface(this, CurrentLanguage); // Translate the UI to language.
+            return;
+        }
 #endif
         FormInitializeSecond();
         FormLoadCheckForUpdates();
@@ -143,8 +146,8 @@ public partial class Main : Form
     {
         C_SAV.Menu_Redo = Menu_Redo;
         C_SAV.Menu_Undo = Menu_Undo;
-        dragout.GiveFeedback += (sender, e) => e.UseDefaultCursors = false;
-        GiveFeedback += (sender, e) => e.UseDefaultCursors = false;
+        dragout.GiveFeedback += (_, e) => e.UseDefaultCursors = false;
+        GiveFeedback += (_, e) => e.UseDefaultCursors = false;
         PKME_Tabs.EnableDragDrop(Main_DragEnter, Main_DragDrop);
         C_SAV.EnableDragDrop(Main_DragEnter, Main_DragDrop);
 
@@ -156,9 +159,9 @@ public partial class Main : Form
 
         // Add ContextMenus
         var mnu = new ContextMenuPKM();
-        mnu.RequestEditorLegality += (o, args) => ClickLegality(mnu, args);
-        mnu.RequestEditorQR += (o, args) => ClickQR(mnu, args);
-        mnu.RequestEditorSaveAs += (o, args) => MainMenuSave(mnu, args);
+        mnu.RequestEditorLegality += (_, args) => ClickLegality(mnu, args);
+        mnu.RequestEditorQR += (_, args) => ClickQR(mnu, args);
+        mnu.RequestEditorSaveAs += (_, args) => MainMenuSave(mnu, args);
         dragout.ContextMenuStrip = mnu.mnuL;
         C_SAV.menu.RequestEditorLegality = DisplayLegalityReport;
     }
@@ -1010,6 +1013,9 @@ public partial class Main : Form
         WinFormsUtil.TranslateInterface(this, lang); // Translate the UI to language.
         LocalizedDescriptionAttribute.Localizer = WinFormsTranslator.GetDictionary(lang);
 
+        SizeCP.ResetSizeLocalizations(lang);
+        PKME_Tabs.SizeCP.TryResetStats();
+
         if (sav is not FakeSaveFile)
         {
             var pk = PKME_Tabs.CurrentPKM.Clone();
@@ -1156,7 +1162,7 @@ public partial class Main : Form
         if (menu != null)
             menu.Enabled = pk.Species != 0 || HaX; // Species
 
-        pb.Image = pk.Sprite(C_SAV.SAV, -1, -1, flagIllegal: false);
+        pb.Image = pk.Sprite(C_SAV.SAV);
         if (pb.BackColor == SlotUtil.BadDataColor)
             pb.BackColor = SlotUtil.GoodDataColor;
     }

@@ -60,6 +60,7 @@ public static class LegalityCheckStrings
     public static string L_XNickname { get; set; } = "Nickname";
     public static string L_XKorean { get; set; } = "Korean";
     public static string L_XKoreanNon { get; set; } = "Non-Korean";
+    public static string L_XLocation { get; set; } = "Location";
     public static string L_XEnigmaBerry_0 { get; set; } = "{0} Berry";
     public static string L_XMatches0_1 { get; set; } = "Matches: {0} {1}";
     public static string L_XWurmpleEvo_0 { get; set; } = "Wurmple Evolution: {0}";
@@ -461,6 +462,9 @@ public static class LegalityCheckStrings
     public static string LStatBattleVersionInvalid { get; set; } = "Battle Version is not within the expected range.";
     public static string LStatNobleInvalid { get; set; } = "Noble Flag mismatch.";
     public static string LStatAlphaInvalid { get; set; } = "Alpha Flag mismatch.";
+
+    public static string LStoredSourceEgg { get; set; } = "Egg must be in Box or Party.";
+    public static string LStoredSourceInvalid_0 { get; set; } = "Invalid Stored Source: {0}";
 
     public static string LSuperComplete { get; set; } = "Super Training complete flag mismatch.";
     public static string LSuperDistro { get; set; } = "Distribution Super Training missions are not released.";
