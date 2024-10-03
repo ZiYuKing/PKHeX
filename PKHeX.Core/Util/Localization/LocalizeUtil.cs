@@ -1,11 +1,11 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace PKHeX.Core;
 
 public static class LocalizeUtil
 {
     /// <summary>
-    /// Initializes PKHeX's runtime strings to the specified language.
+    /// 将PKHeX的运行时字符串初始化为指定语言。
     /// </summary>
     /// <param name="lang">2-char language ID</param>
     /// <param name="sav">Save data (optional)</param>
