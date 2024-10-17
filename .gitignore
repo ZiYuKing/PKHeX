@@ -232,3 +232,6 @@ pingme.txt
 #################
 
 *.userprefs
+PKHeX.WinForms/Controls/PKM Editor/StatEditor.resx
+PKHeX.WinForms/Misc/SplashScreen.resx
+PKHeX.WinForms/Subforms/PKM Editors/Text.resx
