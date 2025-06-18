@@ -49,10 +49,11 @@ public sealed record EncounterSlot6XY(EncounterArea6XY Parent, ushort Species, b
 
     public PK6 ConvertToPKM(ITrainerInfo tr, EncounterCriteria criteria)
     {
-        int lang = (int)Language.GetSafeLanguage(Generation, (LanguageID)tr.Language);
-        var version = Version != GameVersion.XY ? Version : GameVersion.XY.Contains(tr.Version) ? tr.Version : GameVersion.X;
+        int language = (int)Language.GetSafeLanguage(Generation, (LanguageID)tr.Language);
+        var version = Version != GameVersion.XY ? Version : tr.Version is GameVersion.X or GameVersion.Y ? tr.Version : GameVersion.X;
         var form = GetWildForm(Form);
         var pi = PersonalTable.XY[Species, form];
+        var geo = tr.GetRegionOrigin(language);
         var pk = new PK6
         {
             Species = Species,
@@ -64,17 +65,17 @@ public sealed record EncounterSlot6XY(EncounterArea6XY Parent, ushort Species, b
             MetDate = EncounterDate.GetDate3DS(),
 
             Version = version,
-            Language = lang,
+            Language = language,
             OriginalTrainerName = tr.OT,
             OriginalTrainerGender = tr.Gender,
             ID32 = tr.ID32,
-            Nickname = SpeciesName.GetSpeciesNameGeneration(Species, lang, Generation),
+            Nickname = SpeciesName.GetSpeciesNameGeneration(Species, language, Generation),
             OriginalTrainerFriendship = pi.BaseFriendship,
+
+            ConsoleRegion = geo.ConsoleRegion,
+            Country = geo.Country,
+            Region = geo.Region,
         };
-        if (tr is IRegionOrigin r)
-            r.CopyRegionOrigin(pk);
-        else
-            pk.SetDefaultRegionOrigins(lang);
 
         if (IsRandomUnspecificForm && Form == EncounterUtil.FormVivillon)
             pk.Form = Vivillon3DS.GetPattern(pk.Country, pk.Region);
@@ -101,6 +102,11 @@ public sealed record EncounterSlot6XY(EncounterArea6XY Parent, ushort Species, b
     {
         var rnd = Util.Rand;
         pk.PID = rnd.Rand32();
+        if (criteria.Shiny.IsShiny())
+            pk.PID = ShinyUtil.GetShinyPID(pk.TID16, pk.SID16, pk.PID, criteria.Shiny == Shiny.AlwaysSquare ? 0 : (uint)rnd.Next(1, 15));
+        else if (criteria.Shiny == Shiny.Never && pk.IsShiny)
+            pk.PID ^= 0x80000000; // flip top bit to ensure non-shiny
+
         pk.EncryptionConstant = rnd.Rand32();
         pk.Nature = criteria.GetNature();
         pk.Gender = criteria.GetGender(pi);

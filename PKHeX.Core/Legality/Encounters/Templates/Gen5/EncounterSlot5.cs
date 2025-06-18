@@ -1,7 +1,7 @@
 namespace PKHeX.Core;
 
 /// <summary>
-/// Encounter Slot found in <see cref="GameVersion.Gen5"/>.
+/// Encounter Slot found in <see cref="EntityContext.Gen5"/>.
 /// </summary>
 public sealed record EncounterSlot5(EncounterArea5 Parent, ushort Species, byte Form, byte LevelMin, byte LevelMax)
     : IEncounterable, IEncounterMatch, IEncounterConvertible<PK5>
@@ -45,7 +45,7 @@ public sealed record EncounterSlot5(EncounterArea5 Parent, ushort Species, byte 
 
     public PK5 ConvertToPKM(ITrainerInfo tr, EncounterCriteria criteria)
     {
-        int lang = (int)Language.GetSafeLanguage(Generation, (LanguageID)tr.Language);
+        int language = (int)Language.GetSafeLanguage(Generation, (LanguageID)tr.Language);
         var pi = PersonalTable.B2W2[Species];
         var pk = new PK5
         {
@@ -59,11 +59,11 @@ public sealed record EncounterSlot5(EncounterArea5 Parent, ushort Species, byte 
             Ball = (byte)Ball.Poke,
             MetDate = EncounterDate.GetDateNDS(),
 
-            Language = lang,
+            Language = language,
             OriginalTrainerName = tr.OT,
             OriginalTrainerGender = tr.Gender,
             ID32 = tr.ID32,
-            Nickname = SpeciesName.GetSpeciesNameGeneration(Species, lang, Generation),
+            Nickname = SpeciesName.GetSpeciesNameGeneration(Species, language, Generation),
         };
 
         SetPINGA(pk, criteria, pi);
@@ -82,11 +82,9 @@ public sealed record EncounterSlot5(EncounterArea5 Parent, ushort Species, byte 
 
     private void SetPINGA(PK5 pk, EncounterCriteria criteria, PersonalInfo5B2W2 pi)
     {
-        var gender = criteria.GetGender(pi);
-        var nature = criteria.GetNature();
-        var ability = criteria.GetAbilityFromNumber(Ability);
-        PIDGenerator.SetRandomWildPID5(pk, nature, ability, gender);
-        criteria.SetRandomIVs(pk);
+        var abilityIndex = criteria.GetAbilityFromNumber(Ability);
+        var seed = Util.Rand32();
+        MonochromeRNG.Generate(pk, criteria, pi.Gender, seed, abilityIndex);
     }
     #endregion
 

@@ -15,6 +15,7 @@ public static class GenerateMethodH
         var (min, max) = SlotMethodH.GetRange(enc.Type, enc.SlotNumber);
         bool checkProc = MethodH.IsEncounterCheckApplicable(enc.Type);
         bool checkLevel = criteria.IsSpecifiedLevelRange() && enc.IsLevelWithinRange(criteria);
+        bool filterIVs = criteria.IsSpecifiedIVs(2);
 
         // Generate Method H correlated PID and IVs, no lead (keep things simple).
         while (true)
@@ -55,6 +56,8 @@ public static class GenerateMethodH
                 var iv32 = ClassicEraRNG.GetSequentialIVs(ref seed);
                 if (criteria.IsSpecifiedHiddenPower() && !criteria.IsSatisfiedHiddenPower(iv32))
                     break; // try again
+                if (filterIVs && !criteria.IsSatisfiedIVs(iv32))
+                    continue;
 
                 {
                     var level = (byte)MethodH.GetRandomLevel(enc, lv, LeadRequired.None);
@@ -71,14 +74,14 @@ public static class GenerateMethodH
         }
     }
 
-    public static void SetRandomUnown<T>(this T enc, PK3 pk, EncounterCriteria criteria)
+    public static void SetRandomUnown<T>(this T enc, PK3 pk, EncounterCriteria criteria, uint seed)
        where T : INumberedSlot, ISpeciesForm
     {
         //bool checkForm = forms.Contains(criteria.Form); // not a property :(
         var (min, max) = SlotMethodH.GetRangeGrass(enc.SlotNumber);
-        var seed = Util.Rand32();
         // Can't game the seed with % 100 increments as Unown's form calculation is based on the PID.
 
+        var filterIVs = criteria.IsSpecifiedIVs(2);
         while (true)
         {
             var esv = LCRNG.Next16(ref seed) % 100;
@@ -103,6 +106,8 @@ public static class GenerateMethodH
 
                 var iv32 = ClassicEraRNG.GetSequentialIVs(ref seed);
                 if (criteria.IsSpecifiedHiddenPower() && !criteria.IsSatisfiedHiddenPower(iv32))
+                    continue;
+                if (filterIVs && !criteria.IsSatisfiedIVs(iv32))
                     continue;
 
                 pk.PID = pid;
@@ -268,6 +273,20 @@ public static class GenerateMethodH
         return false;
     }
 
+    /// <summary>
+    /// Combines two 16-bit unsigned integers into a single 32-bit unsigned integer.
+    /// </summary>
+    /// <remarks>
+    /// Used for Unown PIDs in FireRed/LeafGreen.
+    /// </remarks>
+    /// <param name="a">The first set of 16 bits from a Rand() call.</param>
+    /// <param name="b">The second set of 16 bits from a Rand() call.</param>
     public static uint GetPIDUnown(uint a, uint b) => a << 16 | b;
+
+    /// <summary>
+    /// Combines two 16-bit unsigned integers into a single 32-bit unsigned integer.
+    /// </summary>
+    /// <param name="a">The first set of 16 bits from a Rand() call.</param>
+    /// <param name="b">The second set of 16 bits from a Rand() call.</param>
     public static uint GetPIDRegular(uint a, uint b) => b << 16 | a;
 }

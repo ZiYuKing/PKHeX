@@ -1,4 +1,5 @@
 using System;
+using static PKHeX.Core.RandomCorrelationRating;
 
 namespace PKHeX.Core;
 
@@ -84,18 +85,20 @@ public sealed record EncounterShadow3Colo(byte Index, ushort Gauge, ReadOnlyMemo
         if (!IsEReader)
             SetPINGA_Regular(pk, criteria, pi);
         else
-            SetPINGA_EReader(pk);
+            SetPINGA_EReader(pk, criteria);
     }
 
     private void SetPINGA_Regular(CK3 pk, EncounterCriteria criteria, PersonalInfo3 pi)
     {
         if (criteria.IsSpecifiedIVsAll() && this.SetFromIVs(pk, criteria, pi, noShiny: false))
             return;
-        if (!this.SetRandom(pk, criteria, pi, noShiny: false))
-            this.SetRandom(pk, EncounterCriteria.Unrestricted, pi, noShiny: false);
+
+        uint seed = Util.Rand32();
+        if (!this.SetRandom(pk, criteria, pi, noShiny: false, seed))
+            this.SetRandom(pk, EncounterCriteria.Unrestricted, pi, noShiny: false, seed);
     }
 
-    private void SetPINGA_EReader(CK3 pk)
+    private void SetPINGA_EReader(CK3 pk, EncounterCriteria criteria)
     {
         // E-Reader have all IVs == 0
         // Skip setting IVs.
@@ -110,15 +113,27 @@ public sealed record EncounterShadow3Colo(byte Index, ushort Gauge, ReadOnlyMemo
         int ctr = 0;
         const int max = 100_000;
         var rnd = Util.Rand;
+        var gr = pk.PersonalInfo.Gender;
         do
         {
             var seed = rnd.Rand32();
-            PIDGenerator.SetValuesFromSeedXDRNG_EReader(pk, seed);
-            if (pk.Nature != nature || pk.Gender != gender)
+            var D = XDRNG.Prev3(seed); // PID
+            var E = XDRNG.Next(D); // PID
+            var pid = (D & 0xFFFF0000) | (E >> 16);
+
+            if ((Nature)(pid % 25) != nature || EntityGender.GetFromPIDAndRatio(pid, gr) != gender)
                 continue;
+
+            if (criteria.Shiny.IsShiny() && !ShinyUtil.GetIsShiny(pk.ID32, pid, 8))
+                continue;
+
             var result = LockFinder.IsAllShadowLockValid(this, seed, pk);
-            if (result)
-                break;
+            if (!result)
+                continue;
+
+            pk.PID = pid;
+            pk.RefreshAbility(0);
+            // IVs always 0 for E-Reader shadows.
         }
         while (++ctr <= max);
     }
@@ -178,11 +193,11 @@ public sealed record EncounterShadow3Colo(byte Index, ushort Gauge, ReadOnlyMemo
 
     #endregion
 
-    public bool IsCompatible(PIDType type, PKM pk)
+    public RandomCorrelationRating IsCompatible(PIDType type, PKM pk)
     {
         if (IsEReader)
-            return true;
-        return type is PIDType.CXD;
+            return Match;
+        return type is PIDType.CXD ? Match : Mismatch;
     }
 
     public PIDType GetSuggestedCorrelation()

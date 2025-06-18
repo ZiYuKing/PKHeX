@@ -16,7 +16,6 @@ public sealed record EncounterSlot7b(EncounterArea7b Parent, ushort Species, byt
     public ushort EggLocation => 0;
 
     public byte Form => 0;
-    public byte CrossoverFlags = CrossoverFlags;
 
     public string Name => $"Wild Encounter ({Version})";
     public string LongName => $"{Name}";
@@ -29,7 +28,7 @@ public sealed record EncounterSlot7b(EncounterArea7b Parent, ushort Species, byt
     public PB7 ConvertToPKM(ITrainerInfo tr) => ConvertToPKM(tr, EncounterCriteria.Unrestricted);
     public PB7 ConvertToPKM(ITrainerInfo tr, EncounterCriteria criteria)
     {
-        int lang = (int)Language.GetSafeLanguage(Generation, (LanguageID)tr.Language);
+        int language = (int)Language.GetSafeLanguage(Generation, (LanguageID)tr.Language);
         var pi = PersonalTable.GG[Species];
         var date = EncounterDate.GetDateSwitch();
         var pk = new PB7
@@ -43,11 +42,11 @@ public sealed record EncounterSlot7b(EncounterArea7b Parent, ushort Species, byt
             MetDate = date,
             Ball = (byte)Ball.Poke,
 
-            Language = lang,
+            Language = language,
             OriginalTrainerName = tr.OT,
             OriginalTrainerGender = tr.Gender,
             ID32 = tr.ID32,
-            Nickname = SpeciesName.GetSpeciesNameGeneration(Species, lang, Generation),
+            Nickname = SpeciesName.GetSpeciesNameGeneration(Species, language, Generation),
 
             ReceivedDate = date,
             ReceivedTime = EncounterDate.GetTime(),
@@ -65,6 +64,11 @@ public sealed record EncounterSlot7b(EncounterArea7b Parent, ushort Species, byt
     {
         var rnd = Util.Rand;
         pk.PID = rnd.Rand32();
+        if (criteria.Shiny.IsShiny())
+            pk.PID = ShinyUtil.GetShinyPID(pk.TID16, pk.SID16, pk.PID, criteria.Shiny == Shiny.AlwaysSquare ? 0 : (uint)rnd.Next(1, 15));
+        else if (criteria.Shiny == Shiny.Never && pk.IsShiny)
+            pk.PID ^= 0x80000000; // flip top bit to ensure non-shiny
+
         pk.EncryptionConstant = rnd.Rand32();
         pk.Nature = criteria.GetNature();
         pk.Gender = criteria.GetGender(pi);

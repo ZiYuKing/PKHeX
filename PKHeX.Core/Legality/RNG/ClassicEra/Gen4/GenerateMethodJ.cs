@@ -25,6 +25,7 @@ public static class GenerateMethodJ
         bool randLevel = MethodJ.IsLevelRand(enc);
         bool checkProc = MethodJ.IsEncounterCheckApplicable(enc.Type);
         bool checkLevel = criteria.IsSpecifiedLevelRange() && enc.IsLevelWithinRange(criteria);
+        bool filterIVs = criteria.IsSpecifiedIVs(2);
 
         // Generate Method J correlated PID and IVs, no lead (keep things simple).
         while (true)
@@ -64,6 +65,8 @@ public static class GenerateMethodJ
                 var iv32 = ClassicEraRNG.GetSequentialIVs(ref seed);
                 if (criteria.IsSpecifiedHiddenPower() && !criteria.IsSatisfiedHiddenPower(iv32))
                     break; // try again
+                if (filterIVs && !criteria.IsSatisfiedIVs(iv32))
+                    continue;
 
                 if (enc.Species is (ushort)Species.Unown)
                 {
@@ -173,5 +176,10 @@ public static class GenerateMethodJ
         return false;
     }
 
+    /// <summary>
+    /// Combines two 16-bit unsigned integers into a single 32-bit unsigned integer.
+    /// </summary>
+    /// <param name="a">The first set of 16 bits from a Rand() call.</param>
+    /// <param name="b">The second set of 16 bits from a Rand() call.</param>
     public static uint GetPIDRegular(uint a, uint b) => b << 16 | a;
 }
