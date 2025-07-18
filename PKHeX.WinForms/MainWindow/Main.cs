@@ -525,7 +525,7 @@ public partial class Main : Form
         // Get Simulator Data
         var text = Clipboard.GetText();
         var sets = BattleTemplateTeams.TryGetSets(text);
-        var set = sets.FirstOrDefault() ?? new(""); // take only first set
+        var set = sets.FirstOrDefault() ?? new(string.Empty); // take only first set
 
         if (set.Species == 0)
         { WinFormsUtil.Alert(MsgSimulatorFailClipboard); return; }
@@ -611,7 +611,7 @@ public partial class Main : Form
 #endif
     }
 
-    private void OpenFile(byte[] input, string path, string ext)
+    internal void OpenFile(byte[] input, string path, string ext)
     {
         var obj = FileUtil.GetSupportedFile(input, ext, C_SAV.SAV);
         if (obj is not null && LoadFile(obj, path))
